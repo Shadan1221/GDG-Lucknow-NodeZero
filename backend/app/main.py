@@ -14,8 +14,8 @@ finally:
     db.close()
 
 app = FastAPI(
-    title="JanSeva AI - Jansunwai Grievance Resolution API",
-    description="Agentic AI governance backend for UP Jansunwai System",
+    title="Awaaz-e-Awadh - Grievance Resolution API",
+    description="Agentic AI governance backend for Awaaz-e-Awadh System",
     version="1.0.0"
 )
 
@@ -35,7 +35,7 @@ app.include_router(complaints.router, prefix="/api")
 @app.get("/")
 def read_root():
     return {
-        "app": "JanSeva AI API",
+        "app": "Awaaz-e-Awadh API",
         "status": "healthy",
         "version": "1.0.0",
         "documentation": "/docs"

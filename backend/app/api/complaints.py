@@ -11,9 +11,11 @@ from app.schemas.schemas import (
     IngestVoiceRequest, 
     ComplaintUpdate, 
     SatisfactionReportBase, 
-    SatisfactionReportResponse
+    SatisfactionReportResponse,
+    TranscribeRequest
 )
 from app.agents.orchestrator import run_agentic_pipeline, generate_vernacular_notifications, run_sla_check
+from app.services.gemini_service import analyze_feedback_sentiment, transcribe_audio
 
 router = APIRouter(prefix="/complaints", tags=["Complaints & Routing"])
 
@@ -59,6 +61,21 @@ def ingest_complaint(payload: IngestVoiceRequest, db: Session = Depends(get_db))
         raise HTTPException(
             status_code=500,
             detail=f"Pipeline processing failed: {str(e)}"
+        )
+
+@router.post("/transcribe", response_model=dict)
+def transcribe_audio_endpoint(payload: TranscribeRequest):
+    """
+    Standalone transcription endpoint to transcribe base64 voice recording 
+    and return the text.
+    """
+    try:
+        text = transcribe_audio(payload.audio_base64)
+        return {"success": True, "transcript": text}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Transcription failed: {str(e)}"
         )
 
 @router.get("", response_model=List[ComplaintResponse])
@@ -176,16 +193,13 @@ def submit_feedback(id: int, payload: SatisfactionReportBase, db: Session = Depe
     if not complaint:
         raise HTTPException(status_code=404, detail="Complaint not found")
         
-    # Simple sentiment analyzer mock
-    text_lower = (payload.feedback or "").lower()
-    sentiment = 0.0
-    if any(k in text_lower for k in ["thanks", "good", "happy", "badhiya", "dhanyawad", "solved", "achha"]):
-        sentiment = 0.8
-    elif any(k in text_lower for k in ["bad", "poor", "slow", "dissatisfied", "bura", "ganda"]):
-        sentiment = -0.6
-    else:
-        # Based on rating
-        sentiment = (payload.citizen_rating - 3) / 2.0
+    try:
+        sentiment = analyze_feedback_sentiment(payload.feedback, payload.citizen_rating)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Sentiment analysis failed: {str(e)}"
+        )
         
     report = SatisfactionReport(
         complaint_id=id,

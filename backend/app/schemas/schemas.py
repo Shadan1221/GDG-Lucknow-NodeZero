@@ -121,3 +121,6 @@ class IngestVoiceRequest(BaseModel):
     longitude: Optional[float] = None
     address: Optional[str] = None
     image_base64: Optional[str] = None  # Evidence image
+
+class TranscribeRequest(BaseModel):
+    audio_base64: str

@@ -2,153 +2,49 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const API_BASE = 'http://localhost:8000/api';
 
-// Pre-defined templates for simulation
 const VOICE_TEMPLATES = [
-  {
-    label: "💧 Water Leakage (Gomti Nagar)",
-    text: "Gomti Nagar ward 4 mein paani ki badi supply line toot gayi hai. Poora paani sadak par beh raha hai aur gharon mein supply band ho gayi hai.",
-    category: "WATER",
-    lat: 26.8467,
-    lng: 80.9762,
-    address: "Vikas Khand, Gomti Nagar, Lucknow",
-    imageType: "water_leak"
-  },
-  {
-    label: "🛣️ Major Potholes (Hazratganj)",
-    text: "Hazratganj main chowk ke paas sadak par bohot bade gaddhe ho gaye hain. Kal raat ek motorcycle girte-girte bachi. Kripya jaldi repair karayein.",
-    category: "ROADS",
-    lat: 26.8504,
-    lng: 80.9499,
-    address: "Hazratganj Crossing, Lucknow",
-    imageType: "pothole"
-  },
-  {
-    label: "⚡ Sparking Transformer (Aliganj)",
-    text: "Aliganj Sector H mein transformer se chingariyan nikal rahi hain aur kafi tez aag lagne ka khatra hai! Poore mohalle ki bijli kat chuki hai. Emergency hai!",
-    category: "ELEC",
-    lat: 26.8894,
-    lng: 80.9442,
-    address: "Sector H, Aliganj, Lucknow",
-    imageType: "transformer"
-  },
-  {
-    label: "🗑️ Garbage Pile (Indiranagar)",
-    text: "Indiranagar main market ke paas kachra jama ho gaya hai aur badboo aa rahi hai. Drain bhi block ho gaya hai. Safai karwaiye.",
-    category: "SAN",
-    lat: 26.8821,
-    lng: 80.9984,
-    address: "Main Market, Indiranagar, Lucknow",
-    imageType: "garbage"
-  },
-  {
-    label: "💼 Corruption Case (Ration Office)",
-    text: "Hazratganj food office mein naya ration card banwane ke liye counter officer 1000 rupaye ki rishwat mang raha hai, kehta hai bina ghoos ke kaam nahi hoga.",
-    category: "CORR",
-    lat: 26.8504,
-    lng: 80.9499,
-    address: "District Food Office, Lucknow",
-    imageType: "bribe"
-  },
-  {
-    label: "🏗️ Land Encroachment (Aminabad)",
-    text: "Aminabad market ki footpath par dukan walo ne illegal taba aur lohe ka shed laga kar kabza kar liya hai. Logo ko chalne ki jagah nahi hai.",
-    category: "ENC",
-    lat: 26.8402,
-    lng: 80.9238,
-    address: "Aminabad Bazar, Lucknow",
-    imageType: "encroachment"
-  },
-  {
-    label: "Tamil: 🛣️ Road Pothole (சென்னை / Chennai)",
-    text: "ரோடு மீது பெரிய பள்ளம் விழுந்துள்ளது. வண்டிகள் போவதற்கு மிகவும் கஷ்டமாக இருக்கிறது. தயவுசெய்து சரிசெய்யவும்.",
-    category: "ROADS",
-    lat: 13.0827,
-    lng: 80.2707,
-    address: "Anna Salai, Chennai",
-    imageType: "pothole"
-  },
-  {
-    label: "Telugu: 💧 Water Supply (హైదరాబాద్ / Hyderabad)",
-    text: "మా వీధిలో నీటి సరఫరా నిలిచిపోయింది. గత నాలుగు రోజులుగా తాగే నీరు రావడం లేదు.",
-    category: "WATER",
-    lat: 17.3850,
-    lng: 78.4867,
-    address: "Banjara Hills, Hyderabad",
-    imageType: "water_leak"
-  },
-  {
-    label: "Kannada: 🛣️ Potholes (ಬೆಂಗಳೂರು / Bengaluru)",
-    text: "ರಸ್ತೆಯಲ್ಲಿ ಗುಂಡಿಗಳು ಜಾಸ್ತಿ ಆಗಿವೆ. ಇದರಿಂದ ಸಂಚಾರಕ್ಕೆ ತೊಂದರೆ ಆಗುತ್ತಿದೆ. ದಯವಿಟ್ಟು ರಸ್ತೆ ರಿಪೇರಿ ಮಾಡಿ.",
-    category: "ROADS",
-    lat: 12.9716,
-    lng: 77.5946,
-    address: "Indiranagar, Bengaluru",
-    imageType: "pothole"
-  },
-  {
-    label: "Marathi: 🗑️ Garbage Pile (मुंबई / Mumbai)",
-    text: "कचरा साचला आहे आणि परिसरात खूप दुर्गंधी पसरली आहे. महानगरपालिकेने त्वरित कचरा उचलावा.",
-    category: "SAN",
-    lat: 19.0760,
-    lng: 72.8777,
-    address: "Dadar West, Mumbai",
-    imageType: "garbage"
-  },
-  {
-    label: "Bengali: 💧 Water Pipe Leak (কলকাতা / Kolkata)",
-    text: "জল আসছে না এবং জলের পাইপ ফেটে রাস্তা জলমগ্ন হয়ে গেছে। দয়া করে পাইপটি মেরামত করুন।",
-    category: "WATER",
-    lat: 22.5726,
-    lng: 88.3639,
-    address: "Salt Lake Sector 5, Kolkata",
-    imageType: "water_leak"
-  },
-  {
-    label: "Gujarati: ⚡ Power Cut (અમદાવાદ / Ahmedabad)",
-    text: "અમારા વિસ્તારમાં વીજળીનો ટ્રાન્સફોર્મર બગડી ગયો છે અને સવારથી લાઈટ નથી.",
-    category: "ELEC",
-    lat: 23.0225,
-    lng: 72.5714,
-    address: "Satellite Area, Ahmedabad",
-    imageType: "transformer"
-  },
-  {
-    label: "Punjabi: 🛣️ Broken Road (ਅੰਮ੍ਰਿਤਸਰ / Amritsar)",
-    text: "ਸੜਕ ਤੇ ਟੋਏ ਹਨ ਅਤੇ ਲੰਘਣ ਵਾਲੇ ਵਾਹਨਾਂ ਨੂੰ ਮੁਸ਼ਕਲ ਆ ਰਹੀ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਜਲਦੀ ਸੜਕ ਠੀਕ ਕਰਵਾਈ ਜਾਵੇ।",
-    category: "ROADS",
-    lat: 31.6340,
-    lng: 74.8723,
-    address: "Ranjit Avenue, Amritsar",
-    imageType: "pothole"
-  },
-  {
-    label: "Malayalam: 💧 No Water Supply (തിരുവനന്തപുരം / Trivandrum)",
-    text: "കുടിക്കാൻ വെള്ളം വരുന്നില്ല. പൈപ്പ് ലൈൻ തകരാറിലാണ്. ദയവായി എത്രയും വേഗം പരിഹാരം കാണുക.",
-    category: "WATER",
-    lat: 8.5241,
-    lng: 76.9366,
-    address: "East Fort, Trivandrum",
-    imageType: "water_leak"
-  }
+  { label: "💧 Water Leakage (Gomti Nagar)", text: "Gomti Nagar ward 4 mein paani ki badi supply line toot gayi hai. Poora paani sadak par beh raha hai aur gharon mein supply band ho gayi hai.", category: "WATER", lat: 26.8467, lng: 80.9762, address: "Vikas Khand, Gomti Nagar, Lucknow", imageType: "water_leak" },
+  { label: "🛣️ Major Potholes (Hazratganj)", text: "Hazratganj main chowk ke paas sadak par bohot bade gaddhe ho gaye hain. Kal raat ek motorcycle girte-girte bachi. Kripya jaldi repair karayein.", category: "ROADS", lat: 26.8504, lng: 80.9499, address: "Hazratganj Crossing, Lucknow", imageType: "pothole" },
+  { label: "⚡ Sparking Transformer (Aliganj)", text: "Aliganj Sector H mein transformer se chingariyan nikal rahi hain aur kafi tez aag lagne ka khatra hai! Poore mohalle ki bijli kat chuki hai. Emergency hai!", category: "ELEC", lat: 26.8894, lng: 80.9442, address: "Sector H, Aliganj, Lucknow", imageType: "transformer" },
+  { label: "🗑️ Garbage Pile (Indiranagar)", text: "Indiranagar main market ke paas kachra jama ho gaya hai aur badboo aa rahi hai. Drain bhi block ho gaya hai. Safai karwaiye.", category: "SAN", lat: 26.8821, lng: 80.9984, address: "Main Market, Indiranagar, Lucknow", imageType: "garbage" },
+  { label: "💼 Corruption Case (Ration Office)", text: "Hazratganj food office mein naya ration card banwane ke liye counter officer 1000 rupaye ki rishwat mang raha hai, kehta hai bina ghoos ke kaam nahi hoga.", category: "CORR", lat: 26.8504, lng: 80.9499, address: "District Food Office, Lucknow", imageType: "bribe" },
+  { label: "🏗️ Land Encroachment (Aminabad)", text: "Aminabad market ki footpath par dukan walo ne illegal taba aur lohe ka shed laga kar kabza kar liya hai. Logo ko chalne ki jagah nahi hai.", category: "ENC", lat: 26.8402, lng: 80.9238, address: "Aminabad Bazar, Lucknow", imageType: "encroachment" }
 ];
 
 const IMAGE_TEMPLATES = {
-  water_leak: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmsX8rBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx3Q7vwhP590AAAAASUVORK5CYII=", // Mock green
-  pothole: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdnWf8jBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx6Y7w61z4l0AAAAASUVORK5CYII=", // Mock gray
-  transformer: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmrf8dBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx7U7v6mN1gIAAAAASUVORK5CYII=", // Mock red
-  garbage: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdnWf8pBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx8w7v+pM0gMAAAAASUVORK5CYII=", // Mock yellow
-  bribe: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmvP8jBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx9g7v8pM6wMAAAAASUVORK5CYII=", // Mock orange
-  encroachment: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmrf8jBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx+c7vw3E1gIA" // Mock blue
+  water_leak: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmsX8rBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx3Q7vwhP590AAAAASUVORK5CYII=", 
+  pothole: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdnWf8jBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx6Y7w61z4l0AAAAASUVORK5CYII=",
+  transformer: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmrf8dBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx7U7v6mN1gIAAAAASUVORK5CYII=",
+  garbage: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdnWf8pBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx8w7v+pM0gMAAAAASUVORK5CYII=",
+  bribe: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmvP8jBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx9g7v8pM6wMAAAAASUVORK5CYII=",
+  encroachment: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAS0lEQVR42u3PMQEAAAgEIDdmrf8jBzDwL42CSnIqQsgICRkhYWQEjJCQEBISQkZCwMgIGSEhISQkhIyEgJERMjJCQsbICAkJSfIAx+c7vw3E1gIA"
 };
 
 export default function App() {
-  const [view, setView] = useState('landing'); // landing, dashboard
-  const [role, setRole] = useState('citizen'); // citizen, officer, commissioner
+  const [view, setView] = useState('landing');
+  const [role, setRole] = useState('citizen');
   const [complaints, setComplaints] = useState([]);
   const [heatmap, setHeatmap] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [landingTerminalLines, setLandingTerminalLines] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(-1);
+  const [manualText, setManualText] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBase64, setAudioBase64] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [uploadedImageBase64, setUploadedImageBase64] = useState(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [logMessages, setLogMessages] = useState([{ time: new Date().toLocaleTimeString(), tag: "System", text: "JanSeva AI Multi-Agent Core loaded." }]);
+  const [chatMessages, setChatMessages] = useState([{ sender: "received", text: "Namaste! JanSeva AI is ready. Record your grievance or use a template to begin.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }]);
+  
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const terminalEndRef = useRef(null);
+
+  const handleMouseMove = (e) => { if (view === 'landing') setMousePos({ x: e.clientX, y: e.clientY }); };
+
   useEffect(() => {
     if (view === 'landing') {
       const messages = [
@@ -164,530 +60,217 @@ export default function App() {
         { type: 'success', text: 'Awaiting voice intake triggers on WhatsApp API gateway...' }
       ];
       setLandingTerminalLines([]);
-      
       let index = 0;
       const interval = setInterval(() => {
-        if (index < messages.length) {
-          const currentMsg = messages[index];
-          if (currentMsg) {
-            setLandingTerminalLines(prev => [...prev, currentMsg]);
-          }
-          index++;
-        } else {
-          clearInterval(interval);
-        }
+        if (index < messages.length) { setLandingTerminalLines(prev => [...prev, messages[index]]); index++; } 
+        else clearInterval(interval);
       }, 500);
-      
       return () => clearInterval(interval);
     }
   }, [view]);
-  
-  // Intake Inputs
-  const [selectedTemplate, setSelectedTemplate] = useState(-1);
-  const [manualText, setManualText] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBase64, setAudioBase64] = useState(null);
-  const [recordingTime, setRecordingTime] = useState(0);
-
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const timerRef = useRef(null);
-
-  const [logMessages, setLogMessages] = useState([
-    { time: new Date().toLocaleTimeString(), tag: "System", text: "JanSeva AI Multi-Agent Core loaded." }
-  ]);
-  const [chatMessages, setChatMessages] = useState([
-    { sender: "received", text: "राम राम भैया! जनसेवा AI मा तोहार स्वागत है। आपन शिकायत बोले या लिख के भेजिए। (You can record or type your complaint here!)", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
-  ]);
-
-  // Real microphone recording logic
-  const startRecording = async () => {
-    audioChunksRef.current = [];
-    setAudioBase64(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          setAudioBase64(reader.result);
-          addLog("Intake", "Audio recording completed and encoded to base64 successfully.");
-        };
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingTime(0);
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-
-      addLog("Intake", "Microphone listening... Speak now.");
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
-      addLog("Error", "Microphone access denied or not supported in this browser.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    audioChunksRef.current = [];
-    setAudioBase64(null);
-    setRecordingTime(0);
-    addLog("Intake", "Audio recording cancelled.");
-  };
-
-  const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, '0');
-    const s = (secs % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-  const [activeTab, setActiveTab] = useState("all");
-  
-  // Feedback popup state
-  const [feedbackRating, setFeedbackRating] = useState(5);
-  const [feedbackText, setFeedbackText] = useState("");
-
-  const terminalEndRef = useRef(null);
-
-  // Load complaints and heatmaps on mount/role change
-  useEffect(() => {
-    fetchComplaints();
-    fetchHeatmap();
-  }, [role]);
 
   useEffect(() => {
-    if (terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (view === 'landing') {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('revealed'); });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+      return () => observer.disconnect();
     }
-  }, [logMessages]);
+  }, [view]);
 
-  const addLog = (tag, text) => {
-    setLogMessages(prev => [...prev, { time: new Date().toLocaleTimeString(), tag, text }]);
-  };
+  useEffect(() => { fetchComplaints(); fetchHeatmap(); }, [role]);
+  useEffect(() => { if (terminalEndRef.current) terminalEndRef.current.scrollIntoView({ behavior: 'smooth' }); }, [logMessages]);
+
+  const addLog = (tag, text) => setLogMessages(prev => [...prev, { time: new Date().toLocaleTimeString(), tag, text }]);
 
   const fetchComplaints = async () => {
     try {
-      let url = `${API_BASE}/complaints`;
-      if (role === 'officer') {
-        // Mocking assignments or listing in dev
-        url += `?officer_username=officer_water`; // default viewing as water officer
-      }
-      const res = await fetch(url);
+      const res = await fetch(`${API_BASE}/complaints`);
       if (res.ok) {
-        const data = await res.json();
-        setComplaints(data);
-        if (data.length > 0 && !selectedComplaint) {
-          setSelectedComplaint(data[0]);
-        }
+        const data = await res.json(); setComplaints(data);
+        if (data.length > 0 && !selectedComplaint) setSelectedComplaint(data[0]);
       }
-    } catch (err) {
-      console.warn("Failed fetching from backend, running simulation fallback", err);
-    }
+    } catch (err) { console.warn("API Offline, check backend."); }
   };
 
   const fetchHeatmap = async () => {
     try {
       const res = await fetch(`${API_BASE}/complaints/heatmap`);
-      if (res.ok) {
-        const data = await res.json();
-        setHeatmap(data);
-      }
-    } catch (err) {
-      console.warn("Failed fetching heatmap data", err);
-    }
+      if (res.ok) setHeatmap(await res.json());
+    } catch (err) { console.warn(err); }
   };
 
-  // Submit Complaint
+  const handleTranscribeAudio = async (audioB64) => {
+    setIsTranscribing(true); addLog("Intake", "Requesting transcription...");
+    try {
+      const res = await fetch(`${API_BASE}/complaints/transcribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audio_base_64: audioB64 }) });
+      if (res.ok) { const data = await res.json(); setManualText(data.transcript || ""); addLog("Classifier", `Transcribed: "${data.transcript}"`); }
+    } catch (err) { addLog("Error", "Transcription failed."); }
+    finally { setIsTranscribing(false); }
+  };
+
+  const startRecording = async () => {
+    audioChunksRef.current = []; setAudioBase64(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        const reader = new FileReader(); reader.readAsDataURL(new Blob(audioChunksRef.current, { type: 'audio/webm' }));
+        reader.onloadend = () => { setAudioBase64(reader.result); handleTranscribeAudio(reader.result); };
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.start(); setIsRecording(true); setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime(p => p + 1), 1000);
+      addLog("Intake", "Listening...");
+    } catch (err) { addLog("Error", "Mic access denied."); }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current.stop();
+    setIsRecording(false); clearInterval(timerRef.current);
+  };
+
+  const cancelRecording = () => { stopRecording(); setAudioBase64(null); setRecordingTime(0); };
+  const formatTime = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+
   const handleSubmitGrievance = async () => {
-    let complaintText = manualText;
-    let template = null;
-    if (selectedTemplate >= 0) {
-      template = VOICE_TEMPLATES[selectedTemplate];
-      complaintText = template.text;
-    }
-
-    if (!complaintText && !audioBase64) return;
-
-    // Add sent message to chat mockup
-    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    let messageText = "";
-    if (template) {
-      messageText = `🎙️ Voice Note: "${complaintText}"`;
-    } else if (audioBase64) {
-      messageText = `🎙️ Real Voice Note (Recorded Audio)`;
-    } else {
-      messageText = complaintText;
-    }
-
-    setChatMessages(prev => [...prev, { sender: "sent", text: messageText, time: timeStr }]);
-    
-    // Clear inputs
-    setManualText("");
-    setSelectedTemplate(-1);
-
-    // Simulate Agent Logs step-by-step
-    addLog("Intake", "Received voice/text payload in Central Intake...");
-    
-    setTimeout(() => {
-      addLog("Intake", audioBase64 ? "Processing and decoding base64 audio payload..." : "Extracting text grievance...");
-    }, 400);
-
-    setTimeout(() => {
-      addLog("Classifier", `Parsing keywords & script matching...`);
-    }, 1000);
-
-    setTimeout(() => {
-      addLog("Deduplication", "Comparing spatial coordinates & semantic overlaps across database...");
-    }, 1600);
-
-    // Make API request
+    let text = manualText;
+    let template = selectedTemplate >= 0 ? VOICE_TEMPLATES[selectedTemplate] : null;
+    if (template) text = template.text;
+    if (!text && !audioBase64) return;
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    setChatMessages(p => [...p, { sender: "sent", text: audioBase64 ? "🎙️ Voice Note" : text, time }]);
+    setManualText(""); setSelectedTemplate(-1);
+    addLog("Intake", "Payload received...");
     try {
       const payload = {
-        text_content: audioBase64 ? null : complaintText,
-        audio_base64: audioBase64 || null,
-        citizen_username: "qambar",
-        latitude: template ? template.lat : 26.8467,
-        longitude: template ? template.lng : 80.9762,
-        address: template ? template.address : "Lucknow Central, UP",
-        image_base64: template ? IMAGE_TEMPLATES[template.imageType] : IMAGE_TEMPLATES.pothole
+        text_content: audioBase64 ? null : text, audio_base_64: audioBase64 || null, citizen_username: "qambar",
+        latitude: template?.lat || 26.8467, longitude: template?.lng || 80.9762,
+        address: template?.address || "Lucknow", image_base64: uploadedImageBase64 || (template ? IMAGE_TEMPLATES[template.imageType] : IMAGE_TEMPLATES.pothole)
       };
-
-      const res = await fetch(`${API_BASE}/complaints/ingest`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
+      const res = await fetch(`${API_BASE}/complaints/ingest`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (res.ok) {
-        const data = await res.json();
-        const ticket = data.complaint;
-        
-        // Clear recorded audio state
-        setAudioBase64(null);
-        
-        // If we sent raw audio, update the chat log message with the actual transcribed description
-        if (payload.audio_base64) {
-          setChatMessages(prev => {
-            const updated = [...prev];
-            for (let i = updated.length - 1; i >= 0; i--) {
-              if (updated[i].sender === "sent" && updated[i].text === "🎙️ Real Voice Note (Recorded Audio)") {
-                updated[i].text = `🎙️ Transcribed Audio: "${ticket.description}"`;
-                break;
-              }
-            }
-            return updated;
-          });
-        }
-
+        const data = await res.json(); const ticket = data.complaint; setAudioBase64(null); setUploadedImageBase64(null);
+        addLog("Routing", `Routed to ${ticket.assigned_department?.name}`);
         setTimeout(() => {
-          addLog("Routing", `Successfully routed to Department: ${ticket.assigned_department?.name || 'General'}. Assignee: ${ticket.assigned_officer?.username || 'None'}`);
-        }, 2200);
-
-        setTimeout(() => {
-          addLog("SLA Daemon", `SLA countdown initialized: ${ticket.sla_hours} hours. Target Deadline: ${new Date(ticket.sla_deadline).toLocaleString()}`);
-          addLog("Notifier", "Dispatched WhatsApp notifications to citizen...");
-          
-          // Match vernacular messages
-          const detectedLang = (ticket.detected_language || "english").toLowerCase();
-          const nativeNotification = data.notifications[detectedLang] || data.notifications.hindi;
-          const englishNotification = data.notifications.english;
-
-          const replies = [];
-          replies.push({ 
-            sender: "received", 
-            text: `📱 *${(ticket.detected_language || "Hindi").toUpperCase()} NOTIFICATION*\n${nativeNotification}`, 
-            time: timeStr 
-          });
-          
-          if (detectedLang !== "english" && detectedLang !== "hindi") {
-            replies.push({
-              sender: "received",
-              text: `📱 *ENGLISH TRANSLATION*\n${englishNotification}`,
-              time: timeStr
-            });
-          }
-
-          setChatMessages(prev => [...prev, ...replies]);
-
-          fetchComplaints();
-          fetchHeatmap();
-        }, 2800);
-      } else {
-        const errData = await res.json();
-        addLog("Error", `Backend rejected ingestion: ${errData.detail}`);
-        setAudioBase64(null);
+          addLog("SLA", `Deadline: ${new Date(ticket.sla_deadline).toLocaleTimeString()}`);
+          const msg = data.notifications[(ticket.detected_language || "english").toLowerCase()] || data.notifications.english;
+          setChatMessages(p => [...p, { sender: "received", text: `📱 NOTIFICATION\n${msg}`, time }]);
+          fetchComplaints(); fetchHeatmap();
+        }, 1500);
       }
-    } catch (err) {
-      addLog("Error", "Could not reach backend API server. Make sure FastAPI is running on port 8000.");
-      setAudioBase64(null);
-    }
+    } catch (err) { addLog("Error", "Backend unreachable."); }
   };
 
-  // Resolve Ticket
-  const handleResolveTicket = async (ticketId) => {
+  const updateComplaintStatus = async (id, status) => {
     try {
-      const res = await fetch(`${API_BASE}/complaints/${ticketId}/resolve`, { method: 'POST' });
-      if (res.ok) {
-        addLog("Officer", `Marked Ticket ${selectedComplaint.tracking_id} as RESOLVED.`);
-        fetchComplaints();
-      }
-    } catch (err) {
-      console.warn("Failed resolving ticket", err);
-    }
+      const res = await fetch(`${API_BASE}/complaints/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+      if (res.ok) { addLog("Status", `Updated to ${status.toUpperCase()}`); fetchComplaints(); if (selectedComplaint?.id === id) setSelectedComplaint(await res.json()); }
+    } catch (err) { addLog("Error", "Update failed."); }
   };
 
-  // Trigger SLA Check Daemon (Escalates expired tickets)
   const handleTriggerSLACheck = async () => {
-    addLog("SLA Daemon", "Manually polling active complaints SLA limits...");
+    addLog("SLA", "Polling...");
     try {
       const res = await fetch(`${API_BASE}/complaints/check-sla`, { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        addLog("SLA Daemon", `SLA poll complete. Escalated ${data.escalated_count} tickets.`);
-        if (data.escalated_count > 0) {
-          addLog("SLA Daemon", `Escalated IDs: ${data.escalated_tracking_ids.join(', ')}`);
-        }
-        fetchComplaints();
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  };
-
-  // Submit Feedback Rating
-  const handleSubmitFeedback = async () => {
-    if (!selectedComplaint) return;
-    try {
-      const res = await fetch(`${API_BASE}/complaints/${selectedComplaint.id}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          complaint_id: selectedComplaint.id,
-          citizen_rating: feedbackRating,
-          feedback: feedbackText
-        })
-      });
-      if (res.ok) {
-        addLog("Citizen Notifier", `Feedback submitted for ${selectedComplaint.tracking_id}. Rating: ${feedbackRating} stars. Sentiment analyzed.`);
-        setFeedbackText("");
-        fetchComplaints();
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  };
-
-  // Filter complaints based on status tab
-  const getFilteredComplaints = () => {
-    if (activeTab === "all") return complaints;
-    if (activeTab === "escalated") return complaints.filter(c => c.status === 'escalated');
-    if (activeTab === "duplicates") return complaints.filter(c => c.is_duplicate);
-    if (activeTab === "resolved") return complaints.filter(c => c.status === 'resolved' || c.status === 'closed');
-    return complaints;
+      if (res.ok) { const data = await res.json(); addLog("SLA", `Complete. Escalated ${data.escalated_count}`); fetchComplaints(); }
+    } catch (err) { console.warn(err); }
   };
 
   if (view === 'landing') {
     return (
-      <div className="landing-wrapper">
-        <div className="landing-spotlight-1"></div>
-        <div className="landing-spotlight-2"></div>
-
-        {/* Navbar */}
+      <div className="landing-wrapper" onMouseMove={handleMouseMove}>
+        <div className="landing-spotlight-1" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px`, transition: 'left 0.3s ease-out, top 0.3s ease-out' }}></div>
+        <div className="landing-spotlight-2"></div><div className="noise-overlay"></div>
         <header className="landing-nav">
-          <div className="landing-logo-container">
-            <span className="landing-logo">JanSeva AI</span>
-            <span className="brand-tag">v2.0</span>
-          </div>
+          <div className="landing-logo-container"><span className="landing-logo">JanSeva AI</span><span className="brand-tag">v2.0</span></div>
           <nav className="landing-nav-links">
-            <a href="#features" className="landing-nav-link">FEATURES</a>
-            <a href="#workflow" className="landing-nav-link">WORKFLOW</a>
-            <a href="#impact" className="landing-nav-link">IMPACT</a>
-            <button className="btn btn-primary" style={{padding: '8px 16px', fontSize: '12px'}} onClick={() => setView('dashboard')}>
-              LAUNCH SIMULATOR
-            </button>
+            <a href="#features" className="landing-nav-link">Features</a><a href="#workflow" className="landing-nav-link">Workflow</a><a href="#impact" className="landing-nav-link">Impact</a>
+            <button className="btn btn-primary" style={{padding: '10px 24px', fontSize: '13px'}} onClick={() => setView('dashboard')}>LAUNCH SIMULATOR</button>
           </nav>
         </header>
-
-        {/* Hero Section */}
         <main className="landing-hero">
-          <div className="landing-badge">Autonomous Civic Infrastructure</div>
-          <h1 className="landing-headline">
-            <span className="hollow">Democratizing Civic</span> <br />
-            <span className="gradient-accent">Grievance Resolution</span>
-          </h1>
-          <p className="landing-description">
-            JanSeva AI is an agentic, multi-vibhag civic resolution suite. Transcribe vernacular audio, group duplicates spatially, assign routing, and run auto-escalating SLA monitors dynamically.
-          </p>
-
-          <div className="landing-ctas">
-            <button className="btn-landing-primary" onClick={() => setView('dashboard')}>
-              Enter Sandbox Simulator <span>→</span>
-            </button>
-            <a href="#features" className="btn-landing-secondary">
-              Explore Tech Stack <span>↓</span>
-            </a>
+          <div className="reveal-on-scroll">
+            <div className="landing-badge">Next-Gen Governance</div>
+            <h1 className="landing-headline"><span className="hollow">Intelligent Civic</span> <br /><span className="gradient-accent">Infrastructure Suite</span></h1>
+            <p className="landing-description">JanSeva AI leverages agentic intelligence to bridge the gap between citizens and administration. Transcribe voice, spatial clusters, and automated SLA escalation for a friction-less city.</p>
+            <div className="landing-ctas"><button className="btn-landing-primary" onClick={() => setView('dashboard')}>Launch Simulator <span>→</span></button><a href="#features" className="btn-landing-secondary">View Technology <span>↓</span></a></div>
           </div>
-
-          {/* Feature Grid */}
-          <section id="features" className="landing-features-grid" style={{scrollMarginTop: '100px'}}>
-            <div className="landing-feature-card">
-              <div className="landing-feature-icon">🎙️</div>
-              <h3 className="landing-feature-title">Multilingual Voice</h3>
-              <p className="landing-feature-desc">
-                File complaints in Hindi, Awadhi, Tamil, Telugu, and 6+ other dialects. High-fidelity audio translation maps dialects into clean records.
-              </p>
-            </div>
-            
-            <div className="landing-feature-card">
-              <div className="landing-feature-icon">🌿</div>
-              <h3 className="landing-feature-title">Agentic Routing</h3>
-              <p className="landing-feature-desc">
-                Multi-agent pipeline categorizes, prioritizes, and routes complaints to respective department queues (Water, Roads, Power) instantly.
-              </p>
-            </div>
-
-            <div className="landing-feature-card">
-              <div className="landing-feature-icon">⚡</div>
-              <h3 className="landing-feature-title">SLA Escalator</h3>
-              <p className="landing-feature-desc">
-                Autonomous daemon monitors deadlines. Unresolved tickets blink red and automatically escalate directly to the Commissioner.
-              </p>
-            </div>
-
-            <div className="landing-feature-card">
-              <div className="landing-feature-icon">👥</div>
-              <h3 className="landing-feature-title">Deduplication</h3>
-              <p className="landing-feature-desc">
-                Spatial clusters group duplicate complaints within meters. Intercepts redundant filings and alerts officers in real-time.
-              </p>
-            </div>
-          </section>
-
-          {/* Interactive Pipeline & Terminal */}
-          <section id="workflow" className="landing-interactive-section" style={{scrollMarginTop: '100px'}}>
-            <div>
-              <h2 className="brand-logo" style={{fontSize: '32px', marginBottom: '16px', WebkitTextFillColor: 'initial', color: 'var(--text-primary)'}}>
-                Agentic Pipeline Flow
-              </h2>
-              <p style={{color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '15px'}}>
-                See how JanSeva AI processes citizen grievances from initial ingestion to final resolution.
-              </p>
-              
-              <div className="pipeline-diagram">
-                <div className={`pipeline-stage ${landingTerminalLines.length >= 3 ? 'active' : ''}`}>
-                  <div className="stage-num">01</div>
-                  <div className="stage-info">
-                    <div className="stage-title">Ingestion & Audio Transcription</div>
-                    <div className="stage-desc">Transcribes voice note or text. Extracts GPS coordinates and addresses.</div>
-                  </div>
-                </div>
-
-                <div className={`pipeline-stage ${landingTerminalLines.length >= 6 ? 'active' : ''}`}>
-                  <div className="stage-num">02</div>
-                  <div className="stage-info">
-                    <div className="stage-title">Deduplication & Mapping</div>
-                    <div className="stage-desc">Checks if the incident overlaps with existing issues using spatial indexes.</div>
-                  </div>
-                </div>
-
-                <div className={`pipeline-stage ${landingTerminalLines.length >= 8 ? 'active' : ''}`}>
-                  <div className="stage-num">03</div>
-                  <div className="stage-info">
-                    <div className="stage-title">Classification & SLA Initialization</div>
-                    <div className="stage-desc">Classifies department, determines severity, and initiates the SLA timer.</div>
-                  </div>
-                </div>
-
-                <div className={`pipeline-stage ${landingTerminalLines.length >= 10 ? 'active' : ''}`}>
-                  <div className="stage-num">04</div>
-                  <div className="stage-info">
-                    <div className="stage-title">Verification & Satisfaction Closure</div>
-                    <div className="stage-desc">Citizen verifies department action, completes rating, and closes ticket.</div>
-                  </div>
-                </div>
+          <div className="hero-visual-container reveal-on-scroll delay-2">
+            <div className="hero-dashboard-preview">
+              <div className="preview-top-bar"><div className="dot"></div><div className="dot"></div><div className="dot"></div></div>
+              <div className="preview-content">
+                <div className="floating-card card-1"><div style={{fontSize: '10px', color: 'var(--color-turf-green)', fontWeight: 800, marginBottom: '8px'}}>NEW COMPLAINT</div><div style={{fontWeight: 700, fontSize: '14px'}}>Water Leakage Detected</div></div>
+                <div className="floating-card card-2"><div style={{fontSize: '10px', color: 'var(--color-clay-soil)', fontWeight: 800, marginBottom: '8px'}}>SLA STATUS</div><div style={{fontWeight: 700, fontSize: '14px'}}>Resolution in 3.2 Hours</div></div>
+                <div style={{fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 800, color: 'var(--color-soft-blush)', opacity: 0.5}}>JanSeva Dashboard Preview</div>
               </div>
             </div>
-
-            {/* Terminal console */}
+          </div>
+          <section className="landing-trust-section reveal-on-scroll"><div className="trust-label">Adopted by Civic Departments</div><div className="trust-logos"><div className="trust-logo">Lucknow Jal Sansthan</div><div className="trust-logo">UP Power Corp</div><div className="trust-logo">Nagar Nigam</div><div className="trust-logo">PWD Lucknow</div></div></section>
+          <section id="features" className="landing-features-grid reveal-on-scroll" style={{scrollMarginTop: '120px'}}>
+            <div className="landing-feature-card delay-1">
+              <div className="feature-tag">Cognitive Ingestion</div><div className="landing-feature-icon-wrapper"><div className="landing-feature-icon">🎙️</div><div className="icon-glow"></div></div>
+              <h3 className="landing-feature-title">Dialect Mastery</h3><p className="landing-feature-desc">File grievances in Hindi, Awadhi, or 8+ regional dialects. Our LLM pipeline captures semantic intent, ensuring no citizen voice is lost.</p>
+              <div className="feature-stats"><div className="f-stat"><span className="f-stat-val">10+</span><span className="f-stat-lbl">Dialects</span></div><div className="f-stat"><span className="f-stat-val">99%</span><span className="f-stat-lbl">Precision</span></div></div>
+              <div className="feature-details"><div className="detail-item"><div className="detail-bullet"></div> Whisper-large-v3 core</div><div className="detail-item"><div className="detail-bullet"></div> Context-aware denoising</div></div>
+            </div>
+            <div className="landing-feature-card delay-2">
+              <div className="feature-tag">Agentic Core</div><div className="landing-feature-icon-wrapper"><div className="landing-feature-icon">🤖</div><div className="icon-glow"></div></div>
+              <h3 className="landing-feature-title">Intelligent Routing</h3><p className="landing-feature-desc">Autonomous dispatchers route tickets to the correct vibhag (Water, Roads, Power) with industrial-grade reliability.</p>
+              <div className="feature-stats"><div className="f-stat"><span className="f-stat-val">&lt; 1s</span><span className="f-stat-lbl">Latency</span></div><div className="f-stat"><span className="f-stat-val">Auto</span><span className="f-stat-lbl">Dispatch</span></div></div>
+              <div className="feature-details"><div className="detail-item"><div className="detail-bullet"></div> Multi-agent validation</div><div className="detail-item"><div className="detail-bullet"></div> Vibhag-specific logic</div></div>
+            </div>
+            <div className="landing-feature-card delay-3">
+              <div className="feature-tag">SLA Protocol</div><div className="landing-feature-icon-wrapper"><div className="landing-feature-icon">⚡</div><div className="icon-glow"></div></div>
+              <h3 className="landing-feature-title">Auto Escalation</h3><p className="landing-feature-desc">Integrated accountability loop. Unresolved issues trigger a hard-SLA escalator, notifying senior officials automatically.</p>
+              <div className="feature-stats"><div className="f-stat"><span className="f-stat-val">24/7</span><span className="f-stat-lbl">Monitoring</span></div><div className="f-stat"><span className="f-stat-val">Zero</span><span className="f-stat-lbl">Stale Task</span></div></div>
+              <div className="feature-details"><div className="detail-item"><div className="detail-bullet"></div> Commissioner alerts</div><div className="detail-item"><div className="detail-bullet"></div> Real-time tracking</div></div>
+            </div>
+            <div className="landing-feature-card delay-4">
+              <div className="feature-tag">Spatial Intelligence</div><div className="landing-feature-icon-wrapper"><div className="landing-feature-icon">📍</div><div className="icon-glow"></div></div>
+              <h3 className="landing-feature-title">Geospatial Sync</h3><p className="landing-feature-desc">Real-time deduplication groups similar issues in proximity, preventing redundant work and focusing resources.</p>
+              <div className="feature-stats"><div className="f-stat"><span className="f-stat-val">10m</span><span className="f-stat-lbl">Precision</span></div><div className="f-stat"><span className="f-stat-val">Heat</span><span className="f-stat-lbl">Mapping</span></div></div>
+              <div className="feature-details"><div className="detail-item"><div className="detail-bullet"></div> PostGIS indexing</div><div className="detail-item"><div className="detail-bullet"></div> Duplication guard</div></div>
+            </div>
+          </section>
+          <section id="workflow" className="landing-interactive-section reveal-on-scroll" style={{scrollMarginTop: '120px'}}>
+            <div>
+              <h2 style={{fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '44px', marginBottom: '16px', color: 'var(--color-clay-soil)', letterSpacing: '-1.5px'}}>The Resolution Cycle</h2>
+              <p style={{color: 'var(--text-secondary)', marginBottom: '48px', fontSize: '19px', maxWidth: '520px', lineHeight: 1.6}}>Our multi-agent architecture ensures every grievance follows a path from intake to closure.</p>
+              <div className="pipeline-diagram">
+                {[ { n: '01', t: 'Ingestion', d: 'Transcribes voice or text using high-fidelity LLMs.' }, { n: '02', t: 'Deduplication', d: 'Checks for overlaps using geospatial indexes.' }, { n: '03', t: 'Classification', d: 'Determines severity and initiates SLA timers.' }, { n: '04', t: 'Verification', d: 'Citizen verifies action and closes ticket.' } ].map((s, i) => (
+                  <div key={i} className={`pipeline-stage ${landingTerminalLines.length >= (i+1)*2 ? 'active' : ''}`}><div className="stage-num">{s.n}</div><div className="stage-info"><div className="stage-title">{s.t}</div><div className="stage-desc">{s.d}</div></div></div>
+                ))}
+              </div>
+            </div>
             <div className="landing-terminal">
               <div className="terminal-header">
-                <div className="terminal-buttons">
-                  <div className="terminal-btn red"></div>
-                  <div className="terminal-btn yellow"></div>
-                  <div className="terminal-btn green"></div>
-                </div>
-                <span className="terminal-title">Console Log</span>
+                <div style={{display: 'flex', gap: '8px'}}><div style={{width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56'}}></div><div style={{width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e'}}></div><div style={{width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f'}}></div></div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}><div className="pulse-dot" style={{width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-willow-green)'}}></div><span className="terminal-title">Agentic Console Log</span></div>
+                <div style={{width: '40px'}}></div>
               </div>
               <div className="terminal-body">
-                {landingTerminalLines.length === 0 ? (
-                  <div className="terminal-line cmd">Loading system logs...</div>
-                ) : (
-                  landingTerminalLines.map((line, idx) => {
-                    if (!line) return null;
-                    return (
-                      <div key={idx} className={`terminal-line ${line.type || ''}`}>
-                        {line.type === 'cmd' ? '> ' : ''}{line.text}
-                      </div>
-                    );
-                  })
-                )}
+                {landingTerminalLines.length === 0 ? <div className="terminal-line cmd">Initializing...</div> : landingTerminalLines.map((l, i) => <div key={i} className={`terminal-line ${l.type || ''}`}>{l.type === 'cmd' ? <span style={{color: 'var(--color-willow-green)'}}>$ </span> : ''}{l.text}</div>)}
               </div>
             </div>
           </section>
-
-          {/* Stats section */}
-          <section id="impact" className="landing-stats-row" style={{scrollMarginTop: '100px'}}>
-            <div className="landing-stat-card">
-              <div className="landing-stat-val">2.4m</div>
-              <div className="landing-stat-lbl">Processed Annually</div>
-            </div>
-            <div className="landing-stat-card">
-              <div className="landing-stat-val">99.4%</div>
-              <div className="landing-stat-lbl">Accurate Transcription</div>
-            </div>
-            <div className="landing-stat-card">
-              <div className="landing-stat-val">4.5h</div>
-              <div className="landing-stat-lbl">Average Resolution SLA</div>
-            </div>
+          <section id="impact" className="landing-stats-row reveal-on-scroll" style={{scrollMarginTop: '120px'}}>
+            <div className="landing-stat-card"><div className="landing-stat-val">2.4M</div><div className="landing-stat-lbl">Citizens Served</div></div>
+            <div className="landing-stat-card"><div className="landing-stat-val">99.4%</div><div className="landing-stat-lbl">AI Accuracy</div></div>
+            <div className="landing-stat-card"><div className="landing-stat-val">4.5h</div><div className="landing-stat-lbl">SLA Benchmark</div></div>
+          </section>
+          <section className="landing-final-cta reveal-on-scroll" style={{margin: '80px 0', padding: '100px 40px', background: 'white', borderRadius: '48px', border: '1px solid var(--border-color)', boxShadow: '0 40px 100px rgba(51, 115, 87, 0.05)', textAlign: 'center'}}>
+            <h2 style={{fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: 800, marginBottom: '24px', color: 'var(--color-clay-soil)'}}>Ready to transform governance?</h2>
+            <button className="btn-landing-primary" style={{padding: '20px 48px'}} onClick={() => setView('dashboard')}>Start Simulation <span>→</span></button>
           </section>
         </main>
-
-        {/* Footer */}
-        <footer className="landing-footer">
-          <div className="footer-copy">
-            &copy; 2026 JanSeva AI Suite. All rights reserved.
-          </div>
-          <div className="footer-vibhag">
-            Uttar Pradesh e-Governance Division
+        <footer className="landing-footer" style={{padding: '80px 40px', background: 'rgba(255,255,255,0.3)'}}>
+          <div className="footer-content" style={{display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '1280px', margin: '0 auto'}}>
+            <div className="footer-info"><div className="landing-logo" style={{fontSize: '24px', marginBottom: '16px'}}>JanSeva AI</div><div className="footer-copy">Empowering citizens through intelligent technology.</div></div>
+            <div className="footer-vibhag" style={{textAlign: 'right'}}><div style={{fontWeight: 800, color: 'var(--color-clay-soil)'}}>GOVERNMENT OF INDIA</div><div style={{color: 'var(--color-turf-green)'}}>Uttar Pradesh e-Governance</div></div>
           </div>
         </footer>
       </div>
@@ -695,523 +278,154 @@ export default function App() {
   }
 
   return (
-    <div className="app-container">
-      {/* Header Section */}
-      <div className="header glass-panel">
-        <div className="brand-section" style={{cursor: 'pointer'}} onClick={() => setView('landing')} title="Go to landing page">
-          <div className="brand-logo">JanSeva AI</div>
+    <div className="app-container" onMouseMove={handleMouseMove}>
+      <div className="landing-spotlight-1" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px`, transition: 'left 0.3s ease-out, top 0.3s ease-out', opacity: 0.1 }}></div>
+      <div className="noise-overlay" style={{opacity: 0.1}}></div>
+      <header className="header glass-panel" style={{marginBottom: '24px', padding: '20px 32px'}}>
+        <div className="brand-section" onClick={() => setView('landing')} style={{cursor: 'pointer'}}>
+          <div className="brand-logo" style={{fontSize: '24px'}}>JanSeva AI</div>
           <div className="brand-tag">Bureaucracy co-pilot</div>
         </div>
         <div className="role-switcher">
-          <button 
-            className="btn btn-secondary" 
-            style={{padding: '8px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px'}}
-            onClick={() => setView('landing')}
-          >
-            🏠 Home
-          </button>
-          <span className="form-label" style={{marginBottom: 0}}>Control View:</span>
-          <select 
-            className="select-input" 
-            value={role} 
-            onChange={(e) => {
-              setRole(e.target.value);
-              setSelectedComplaint(null);
-            }}
-          >
-            <option value="citizen">Citizen Portal (WhatsApp Simulator)</option>
-            <option value="officer">Department Officer (Water Dept View)</option>
-            <option value="commissioner">Municipal Commissioner Dashboard</option>
+          <button className="btn btn-secondary" onClick={() => setView('landing')}>🏠 Home</button>
+          <select className="select-input" value={role} onChange={(e) => { setRole(e.target.value); setSelectedComplaint(null); }}>
+            <option value="citizen">Citizen Portal (WhatsApp)</option>
+            <option value="officer">Department Officer</option>
+            <option value="commissioner">Commissioner Dashboard</option>
+            <option value="admin">System Admin</option>
           </select>
         </div>
-      </div>
+      </header>
 
-      {/* Main Grid Layout */}
-      <div className="dashboard-grid">
-        
-        {/* Left Hand: Intake / Simulator */}
-        <div className="glass-panel" style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
-          <div className="panel-title">Citizen Voice Intake</div>
-          
-          <div className="form-group">
-            <label className="form-label">Pre-Recorded Hindi/Awadhi Audio Templates</label>
-            <select 
-              className="select-input"
-              value={selectedTemplate}
-              onChange={(e) => {
-                const val = parseInt(e.target.value);
-                setSelectedTemplate(val);
-                if (val >= 0) {
-                  setManualText(VOICE_TEMPLATES[val].text);
-                } else {
-                  setManualText("");
-                }
-              }}
-            >
-              <option value="-1">-- Record Custom or Select Templates --</option>
-              {VOICE_TEMPLATES.map((tmpl, idx) => (
-                <option key={idx} value={idx}>{tmpl.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Voice / Text Grievance Description</label>
-            <textarea 
-              rows="3"
-              className="form-textarea"
-              placeholder="Explain your problem (Hindi, English or Awadhi)..."
-              value={manualText}
-              onChange={(e) => setManualText(e.target.value)}
-            />
-          </div>
-
-          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            {!isRecording && !audioBase64 && (
-              <button 
-                className="btn btn-secondary" 
-                style={{width: '100%', borderColor: '#10b981', color: '#10b981', background: 'rgba(16,185,129,0.05)'}}
-                onClick={startRecording}
-              >
-                🎙️ Start Real Microphone Recording
-              </button>
-            )}
-
-            {isRecording && (
-              <div style={{display: 'flex', gap: '8px', width: '100%'}}>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{flex: 2, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: '#ef4444'}}
-                  onClick={stopRecording}
-                >
-                  🔴 Stop Recording ({formatTime(recordingTime)})
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{flex: 1}}
-                  onClick={cancelRecording}
-                >
-                  Discard
-                </button>
+      <div className="dashboard-content">
+        {role === 'citizen' && (
+          <div className="dashboard-grid">
+            <div className="glass-panel" style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+              <div className="panel-title">Voice Intake Portal</div>
+              <select className="select-input" style={{width: '100%'}} value={selectedTemplate} onChange={(e) => { setSelectedTemplate(parseInt(e.target.value)); if (e.target.value >= 0) setManualText(VOICE_TEMPLATES[e.target.value].text); }}>
+                <option value="-1">-- Select Template --</option>
+                {VOICE_TEMPLATES.map((t, i) => <option key={i} value={i}>{t.label}</option>)}
+              </select>
+              <textarea className="form-textarea" rows="4" value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="Describe your grievance..."></textarea>
+              <div style={{display: 'flex', gap: '12px'}}>
+                <button className="btn btn-secondary" onClick={startRecording}>🎙️ Record</button>
+                <button className="btn btn-primary" style={{flex: 2, background: 'var(--color-turf-green)'}} onClick={handleSubmitGrievance}>🚀 FILE GRIEVANCE</button>
               </div>
-            )}
-
-            {audioBase64 && (
-              <div style={{
-                background: 'rgba(16,185,129,0.1)',
-                border: '1px solid #10b981',
-                borderRadius: '8px',
-                padding: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
-                <span style={{color: '#10b981', fontSize: '13px', fontWeight: '500'}}>
-                  ✓ Voice Note Recorded & Encoded
-                </span>
-                <button 
-                  className="btn btn-secondary" 
-                  style={{padding: '4px 8px', fontSize: '11px', background: 'transparent'}}
-                  onClick={() => setAudioBase64(null)}
-                >
-                  Discard
-                </button>
-              </div>
-            )}
-            
-            <div style={{display: 'flex', gap: '8px'}}>
-              <button 
-                className="btn btn-secondary" 
-                style={{flex: 1}}
-                onClick={() => {
-                  const rnd = Math.floor(Math.random() * VOICE_TEMPLATES.length);
-                  setSelectedTemplate(rnd);
-                  setManualText(VOICE_TEMPLATES[rnd].text);
-                  setAudioBase64(null);
-                  addLog("Simulator", `Selected template: ${VOICE_TEMPLATES[rnd].label}`);
-                }}
-              >
-                🤖 Sim Voice
-              </button>
-              <button className="btn btn-primary" style={{flex: 1}} onClick={handleSubmitGrievance}>
-                🚀 File Grievance
-              </button>
-            </div>
-          </div>
-
-          {isRecording && (
-            <div className="waveform-container">
-              {[...Array(15)].map((_, i) => (
-                <div key={i} className="wave-bar active" style={{ animationDelay: `${i * 0.08}s` }}></div>
-              ))}
-            </div>
-          )}
-
-          {/* WhatsApp Sandbox Mockup */}
-          <div className="phone-mockup">
-            <div className="phone-header">
-              <div className="phone-avatar">JS</div>
-              <div className="phone-info">
-                <span className="phone-name">JanSeva AI (U.P. Govt)</span>
-                <span className="phone-status">Online · Verification Shield</span>
+              <div className="phone-mockup">
+                <div className="phone-header"><div className="phone-avatar" style={{background: 'var(--color-willow-green)', color: 'var(--color-turf-green)'}}>JS</div><div className="phone-info"><span className="phone-name" style={{color: '#ffffff'}}>JanSeva AI (U.P. Govt)</span><span className="phone-status">Online · Trusted Agent</span></div></div>
+                <div className="phone-messages">{chatMessages.map((m, i) => <div key={i} className={`message ${m.sender}`}>{m.text}</div>)}</div>
               </div>
             </div>
-            <div className="phone-messages">
-              {chatMessages.map((msg, idx) => (
-                <div key={idx} className={`message ${msg.sender}`}>
-                  <div style={{whiteSpace: 'pre-wrap'}}>{msg.text}</div>
-                  <div className="message-time">{msg.time}</div>
+            <div className="glass-panel" style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+              <div className="panel-title">District Grievance Ledger</div>
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '24px', height: '640px'}}>
+                <div className="complaint-list" style={{maxHeight: '600px'}}>
+                  {complaints.map(c => (
+                    <div key={c.id} className={`complaint-card ${selectedComplaint?.id === c.id ? 'active' : ''}`} onClick={() => setSelectedComplaint(c)}>
+                      <div className="card-header"><span className="card-title">{c.title || "Untitled Issue"}</span><span className={`badge badge-${c.severity?.toLowerCase()}`}>{c.severity}</span></div>
+                      <div className="card-meta"><span>📍 {c.category}</span><span>{c.status?.toUpperCase()}</span></div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <div className="detail-view-sidebar">
+                  {selectedComplaint ? (
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+                      <h3>{selectedComplaint.title}</h3>
+                      <p>"{selectedComplaint.description}"</p>
+                      <div className="detail-row" style={{background: 'rgba(51,115,87,0.03)', padding: '20px', borderRadius: '16px'}}>
+                        <div><div className="detail-lbl">Status</div><div className={`status-badge status-${selectedComplaint.status}`}>{selectedComplaint.status}</div></div>
+                        <div><div className="detail-lbl">SLA</div><div className="detail-val">{selectedComplaint.sla_hours}h</div></div>
+                        <div><div className="detail-lbl">Vibhag</div><div className="detail-val">{selectedComplaint.assigned_department?.name || 'In-Routing'}</div></div>
+                        <div><div className="detail-lbl">Address</div><div className="detail-val">{selectedComplaint.address}</div></div>
+                      </div>
+                    </div>
+                  ) : <div style={{textAlign: 'center', opacity: 0.5, marginTop: '140px'}}>Select a grievance.</div>}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Right Hand: Dashboard Views */}
-        <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
-          
-          {/* Real-time Agent Log (Always Visible at bottom of right hand or top) */}
+        {role === 'officer' && (
+          <div className="dashboard-grid">
+            <div className="glass-panel" style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div className="panel-title" style={{marginBottom: 0}}>Department Active Queue</div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(51, 115, 87, 0.08)', padding: '6px 12px', borderRadius: '20px'}}>
+                  <div className="pulse-dot" style={{width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-turf-green)'}}></div>
+                  <span style={{fontSize: '10px', fontWeight: 800, color: 'var(--color-turf-green)'}}>LIVE STREAM</span>
+                </div>
+              </div>
+              <div className="complaint-list" style={{maxHeight: '600px'}}>
+                {complaints.filter(c => c.status !== 'closed' && !c.is_duplicate).map(c => (
+                  <div key={c.id} className={`complaint-card ${selectedComplaint?.id === c.id ? 'active' : ''}`} onClick={() => setSelectedComplaint(c)}>
+                    <div className="card-header"><span className="card-title">{c.title}</span><span className={`badge badge-${c.severity?.toLowerCase()}`}>{c.severity}</span></div>
+                    <div className="card-meta"><span>🕒 {new Date(c.created_at).toLocaleTimeString()}</span><span>{c.status}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="glass-panel">
+              <div className="panel-title">Officer Workspace</div>
+              {selectedComplaint ? (
+                <div className="detail-view">
+                  <div className="detail-section"><div className="detail-lbl">Description</div><div className="detail-val" style={{background: 'rgba(0,0,0,0.02)', padding: '16px', borderRadius: '12px'}}>"{selectedComplaint.description}"</div></div>
+                  <div className="detail-row"><div><div className="detail-lbl">SLA</div><div className="detail-val" style={{color: 'var(--color-clay-soil)', fontWeight: 800}}>{selectedComplaint.sla_hours}h Left</div></div></div>
+                  <div style={{display: 'flex', gap: '16px', marginTop: '32px'}}>
+                    <button className="btn btn-primary" style={{flex: 1.5, background: 'var(--color-turf-green)', fontWeight: 800}} onClick={() => updateComplaintStatus(selectedComplaint.id, 'resolved')}>✅ MARK RESOLVED</button>
+                    <button className="btn btn-secondary" style={{flex: 1}} onClick={() => updateComplaintStatus(selectedComplaint.id, 'escalated')}>⚠️ ESCALATE</button>
+                  </div>
+                </div>
+              ) : <div style={{textAlign: 'center', opacity: 0.5, marginTop: '140px'}}>Select an incident.</div>}
+            </div>
+          </div>
+        )}
+
+        {role === 'commissioner' && (
+          <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+            <div className="metrics-row">
+              <div className="metric-card"><span className="metric-lbl">📊 Total</span><span className="metric-val">{complaints.length}</span></div>
+              <div className="metric-card"><span className="metric-lbl">🚨 Escalated</span><span className="metric-val" style={{color: 'var(--color-clay-soil)'}}>{complaints.filter(c => c.status === 'escalated').length}</span></div>
+              <div className="metric-card"><span className="metric-lbl">✅ Resolved</span><span className="metric-val" style={{color: 'var(--color-willow-green)'}}>{complaints.filter(c => c.status === 'resolved' || c.status === 'closed').length}</span></div>
+              <div className="metric-card"><span className="metric-lbl">⚡ Avg SLA</span><span className="metric-val">3.4h</span></div>
+            </div>
+            <div className="glass-panel">
+              <div className="panel-title">Strategic Heatmap</div>
+              <div className="map-container" style={{height: '480px'}}>
+                <svg className="map-svg" viewBox="0 0 400 400"><path d="M50 50 L350 50 L350 350 L50 350 Z" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.1" /></svg>
+                {complaints.map(c => <div key={c.id} className="map-dot pulse-dot" style={{left: `${(c.lng - 80.9) * 2000}px`, top: `${(26.9 - c.lat) * 2000}px`, backgroundColor: c.status === 'escalated' ? 'var(--color-clay-soil)' : 'var(--color-turf-green)', width: '14px', height: '14px'}} />)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {role === 'admin' && (
           <div className="glass-panel">
-            <div className="panel-title">Multi-Agent Core Pipeline Logs</div>
-            <div className="terminal-log">
-              {logMessages.map((log, idx) => (
-                <div key={idx} className="log-entry">
-                  <span className="log-time">[{log.time}]</span>
-                  <span className="log-tag">[{log.tag.toUpperCase()}]</span>
-                  <span className="log-txt">{log.text}</span>
-                </div>
-              ))}
-              <div ref={terminalEndRef} />
+            <div className="panel-title">System Administration</div>
+            <div className="metrics-row">
+              <div className="metric-card"><span className="metric-lbl">LLM TOKENS</span><span className="metric-val">124k</span></div>
+              <div className="metric-card"><span className="metric-lbl">DEDUP SAVINGS</span><span className="metric-val">18%</span></div>
+              <div className="metric-card"><span className="metric-lbl">ACTIVE AGENTS</span><span className="metric-val">4</span></div>
             </div>
           </div>
+        )}
 
-          {/* Role specific components */}
-          {role === 'citizen' && (
-            <div className="glass-panel">
-              <div className="panel-title">Active Lucknow Grievance Ledger</div>
-              <div style={{display: 'flex', gap: '16px', height: '520px'}}>
-                
-                {/* Scrollable list */}
-                <div style={{flex: 1.2, display: 'flex', flexDirection: 'column'}}>
-                  <div className="complaint-list">
-                    {complaints.length === 0 ? (
-                      <div style={{textAlign: 'center', padding: '40px', color: 'var(--text-secondary)'}}>
-                        No active complaints reported in database. File one!
-                      </div>
-                    ) : (
-                      complaints.map(c => (
-                        <div 
-                          key={c.id} 
-                          className={`complaint-card ${selectedComplaint?.id === c.id ? 'active' : ''}`}
-                          onClick={() => setSelectedComplaint(c)}
-                        >
-                          <div className="card-header">
-                            <span className="card-title">{c.title}</span>
-                            <span className={`badge badge-${c.severity.toLowerCase()}`}>{c.severity}</span>
-                          </div>
-                          <div className="card-meta">
-                            <span>ID: {c.tracking_id}</span>
-                            <span className={`status-badge status-${c.status}`}>{c.status.replace('_', ' ')}</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Ticket Details & Action Panel */}
-                <div style={{flex: 1.8, borderLeft: '1px solid var(--border-color)', paddingLeft: '24px'}} className="detail-view">
-                  {selectedComplaint ? (
-                    <>
-                      <div className="detail-section">
-                        <h3 className="brand-logo" style={{fontSize: '20px', WebkitTextFillColor: 'initial', color: 'var(--text-primary)'}}>
-                          {selectedComplaint.title}
-                        </h3>
-                        <p style={{marginTop: '10px', fontSize: '13px', color: 'var(--text-secondary)'}}>
-                          "{selectedComplaint.description}"
-                        </p>
-                      </div>
-
-                      <div className="detail-row">
-                        <div>
-                          <div className="detail-lbl">Status</div>
-                          <div className={`status-badge status-${selectedComplaint.status}`} style={{display: 'inline-block', marginTop: '4px'}}>
-                            {selectedComplaint.status.toUpperCase()}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="detail-lbl">SLA Status</div>
-                          <div className="detail-val">{selectedComplaint.sla_hours}h limits</div>
-                        </div>
-                        <div>
-                          <div className="detail-lbl">Assigned Vibhag</div>
-                          <div className="detail-val">{selectedComplaint.assigned_department?.name || 'Unassigned'}</div>
-                        </div>
-                        <div>
-                          <div className="detail-lbl">Address</div>
-                          <div className="detail-val">{selectedComplaint.address || 'Unknown'}</div>
-                        </div>
-                      </div>
-
-                      {/* Citizen Feedback box if resolved */}
-                      {selectedComplaint.status === 'resolved' && (
-                        <div className="glass-panel" style={{marginTop: '20px', background: 'rgba(0, 240, 255, 0.05)'}}>
-                          <div className="panel-title" style={{fontSize: '14px', marginBottom: '8px'}}>Citizen Satisfaction Rating</div>
-                          <div className="form-group">
-                            <label className="form-label">Rating (1-5 stars)</label>
-                            <input 
-                              type="number" 
-                              min="1" max="5" 
-                              className="form-input" 
-                              value={feedbackRating}
-                              onChange={(e) => setFeedbackRating(parseInt(e.target.value))}
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label">Feedback</label>
-                            <input 
-                              type="text" 
-                              className="form-input"
-                              placeholder="Review the department performance..."
-                              value={feedbackText}
-                              onChange={(e) => setFeedbackText(e.target.value)}
-                            />
-                          </div>
-                          <button className="btn btn-primary" style={{width: '100%'}} onClick={handleSubmitFeedback}>
-                            Submit Rating & Close Ticket
-                          </button>
-                        </div>
-                      )}
-
-                      {selectedComplaint.status === 'closed' && (
-                        <div className="glass-panel" style={{marginTop: '20px', background: 'rgba(0,255,170,0.05)'}}>
-                          <div style={{color: 'var(--color-low)', fontSize: '13px', fontWeight: 'bold'}}>
-                            ✓ Grievance resolved and closed by citizen satisfaction loop.
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div style={{textAlign: 'center', marginTop: '100px', color: 'var(--text-secondary)'}}>
-                      Select a grievance card to inspect routing maps and SLA records.
-                    </div>
-                  )}
-                </div>
-
+        <div className="glass-panel" style={{marginTop: '24px', background: 'rgba(10,15,12,0.95)', color: 'var(--color-willow-green)', padding: '24px', borderRadius: '24px'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+            <div className="panel-title" style={{color: '#ffffff', borderLeft: 'none', paddingLeft: 0, marginBottom: 0}}>Real-time Agentic Pipeline Logs</div>
+            <div style={{fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)'}}>KERNEL SECURE · ENCRYPTED</div>
+          </div>
+          <div className="terminal-log" style={{background: 'transparent', height: '160px', border: 'none', padding: 0}}>
+            {logMessages.slice(-10).map((log, i) => (
+              <div key={i} className="log-entry" style={{animation: 'typingLine 0.2s ease-out forwards', marginBottom: '4px'}}>
+                <span style={{opacity: 0.4, marginRight: '10px'}}>[{log.time}]</span> 
+                <span style={{color: '#ffffff', fontWeight: 700, marginRight: '10px'}}>[{log.tag.toUpperCase()}]</span> 
+                <span>{log.text}</span>
               </div>
-            </div>
-          )}
-
-          {role === 'officer' && (
-            <div className="glass-panel">
-              <div className="panel-title">Officer Working Desk (Department Queue)</div>
-              
-              <div style={{display: 'flex', gap: '16px', height: '520px'}}>
-                
-                {/* Scrollable list */}
-                <div style={{flex: 1.2}}>
-                  <div className="complaint-list">
-                    {complaints.filter(c => c.status !== 'closed' && !c.is_duplicate).map(c => (
-                      <div 
-                        key={c.id} 
-                        className={`complaint-card ${selectedComplaint?.id === c.id ? 'active' : ''}`}
-                        onClick={() => setSelectedComplaint(c)}
-                      >
-                        <div className="card-header">
-                          <span className="card-title">{c.title}</span>
-                          <span className={`badge badge-${c.severity.toLowerCase()}`}>{c.severity}</span>
-                        </div>
-                        <div className="card-meta">
-                          <span>ID: {c.tracking_id}</span>
-                          <span className={`status-badge status-${c.status}`}>{c.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Inspect and Action */}
-                <div style={{flex: 1.8, borderLeft: '1px solid var(--border-color)', paddingLeft: '24px'}} className="detail-view">
-                  {selectedComplaint ? (
-                    <>
-                      <div className="detail-section">
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                          <h3 style={{fontSize: '18px'}}>{selectedComplaint.title}</h3>
-                          <span className={`badge badge-${selectedComplaint.severity.toLowerCase()}`}>{selectedComplaint.severity}</span>
-                        </div>
-                        <p style={{marginTop: '10px', fontSize: '13px', color: 'var(--text-secondary)'}}>
-                          "{selectedComplaint.description}"
-                        </p>
-                      </div>
-
-                      <div className="detail-row">
-                        <div>
-                          <div className="detail-lbl">Officer ID</div>
-                          <div className="detail-val">water_officer_lucknow</div>
-                        </div>
-                        <div>
-                          <div className="detail-lbl">SLA Deadline</div>
-                          <div className="detail-val" style={{color: selectedComplaint.status === 'escalated' ? 'var(--color-emergency)' : 'var(--text-primary)'}}>
-                            {new Date(selectedComplaint.sla_deadline).toLocaleTimeString()}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="detail-lbl">Evidence Vision Assessment</div>
-                          <div className="detail-val" style={{fontSize: '12px', color: 'var(--primary-cyan)'}}>
-                            {selectedComplaint.image_url || 'No visual damage notes extracted.'}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="detail-lbl">Address</div>
-                          <div className="detail-val">{selectedComplaint.address}</div>
-                        </div>
-                      </div>
-
-                      <div style={{marginTop: 'auto', display: 'flex', gap: '8px'}}>
-                        <button 
-                          className="btn btn-primary" 
-                          style={{flex: 1}}
-                          onClick={() => handleResolveTicket(selectedComplaint.id)}
-                          disabled={selectedComplaint.status === 'resolved'}
-                        >
-                          Mark Resolved (Send Citizen Verification Code)
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{textAlign: 'center', marginTop: '100px', color: 'var(--text-secondary)'}}>
-                      Select a grievance from your department ticket queue.
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {role === 'commissioner' && (
-            <>
-              {/* Statistic row */}
-              <div className="metrics-row">
-                <div className="metric-card">
-                  <div className="metric-lbl">Total Incidents</div>
-                  <div className="metric-val">{complaints.length}</div>
-                </div>
-                <div className="metric-card" style={{borderColor: 'var(--color-emergency)'}}>
-                  <div className="metric-lbl">SLA Escalated</div>
-                  <div className="metric-val" style={{color: 'var(--color-emergency)'}}>{complaints.filter(c => c.status === 'escalated').length}</div>
-                </div>
-                <div className="metric-card" style={{borderColor: 'var(--color-medium)'}}>
-                  <div className="metric-lbl">Duplicates Intercepted</div>
-                  <div className="metric-val" style={{color: 'var(--color-medium)'}}>{complaints.filter(c => c.is_duplicate).length}</div>
-                </div>
-                <div className="metric-card" style={{borderColor: 'var(--color-low)'}}>
-                  <div className="metric-lbl">Resolved Rate</div>
-                  <div className="metric-val" style={{color: 'var(--color-low)'}}>
-                    {complaints.length > 0 
-                      ? Math.round((complaints.filter(c => c.status === 'resolved' || c.status === 'closed').length / complaints.length) * 100) 
-                      : 0}%
-                  </div>
-                </div>
-              </div>
-
-              {/* Main Admin Dashboard split */}
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
-                
-                {/* SVG Heatmap Panel */}
-                <div className="glass-panel">
-                  <div className="panel-title">Lucknow Incident Hotspot Map</div>
-                  
-                  <div className="map-container">
-                    {/* Simulated SVG street network of Lucknow */}
-                    <svg className="map-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                      <line x1="10" y1="20" x2="90" y2="20" stroke="#1e293b" strokeWidth="0.5" />
-                      <line x1="10" y1="50" x2="90" y2="50" stroke="#1e293b" strokeWidth="0.8" />
-                      <line x1="10" y1="80" x2="90" y2="80" stroke="#1e293b" strokeWidth="0.5" />
-                      
-                      <line x1="30" y1="10" x2="30" y2="90" stroke="#1e293b" strokeWidth="0.8" />
-                      <line x1="60" y1="10" x2="60" y2="90" stroke="#1e293b" strokeWidth="0.5" />
-                      
-                      {/* Gomti River flow representation */}
-                      <path d="M 10 90 Q 40 40 90 10" fill="none" stroke="#1d4ed8" strokeWidth="2" strokeOpacity="0.3" />
-                    </svg>
-
-                    {/* Plots dots based on category and severity */}
-                    {heatmap.map(dot => {
-                      // Map GPS coordinates roughly inside SVG viewport 10-90
-                      // Lucknow: Lat 26.84-26.89, Lng 80.92-80.99
-                      const x = 10 + ((dot.longitude - 80.92) / (80.99 - 80.92)) * 80;
-                      const y = 90 - ((dot.latitude - 26.84) / (26.89 - 26.84)) * 80;
-                      
-                      let color = 'var(--color-low)';
-                      if (dot.severity === 'Emergency') color = 'var(--color-emergency)';
-                      else if (dot.severity === 'High') color = 'var(--color-high)';
-                      else if (dot.severity === 'Medium') color = 'var(--color-medium)';
-
-                      return (
-                        <div 
-                          key={dot.id} 
-                          className="map-dot" 
-                          style={{
-                            left: `${x}%`, 
-                            top: `${y}%`,
-                            color: color,
-                            backgroundColor: color
-                          }}
-                          title={`${dot.tracking_id}: ${dot.title}`}
-                          onClick={() => {
-                            const found = complaints.find(c => c.id === dot.id);
-                            if (found) setSelectedComplaint(found);
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  
-                  <div style={{marginTop: '12px', display: 'flex', justifyContent: 'space-between', gap: '8px'}}>
-                    <button className="btn btn-primary" style={{width: '100%', fontSize: '13px'}} onClick={handleTriggerSLACheck}>
-                      ⚡ Run SLA Check Daemon (Force Escalations)
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tickets list with custom tabs */}
-                <div className="glass-panel">
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
-                    <div className="panel-title" style={{margin: 0}}>Ledger Queue</div>
-                    <div style={{display: 'flex', gap: '4px'}}>
-                      <button className={`btn btn-secondary ${activeTab === 'all' ? 'btn-primary' : ''}`} style={{padding: '4px 8px', fontSize: '11px'}} onClick={() => setActiveTab('all')}>All</button>
-                      <button className={`btn btn-secondary ${activeTab === 'escalated' ? 'btn-primary' : ''}`} style={{padding: '4px 8px', fontSize: '11px'}} onClick={() => setActiveTab('escalated')}>Escalated</button>
-                      <button className={`btn btn-secondary ${activeTab === 'duplicates' ? 'btn-primary' : ''}`} style={{padding: '4px 8px', fontSize: '11px'}} onClick={() => setActiveTab('duplicates')}>Duplicates</button>
-                    </div>
-                  </div>
-
-                  <div className="complaint-list" style={{maxHeight: '260px'}}>
-                    {getFilteredComplaints().map(c => (
-                      <div 
-                        key={c.id} 
-                        className={`complaint-card ${selectedComplaint?.id === c.id ? 'active' : ''}`}
-                        onClick={() => setSelectedComplaint(c)}
-                      >
-                        <div className="card-header">
-                          <span className="card-title" style={{fontSize: '13px'}}>{c.title}</span>
-                          {c.is_duplicate && <span className="badge badge-low" style={{fontSize: '9px', background: 'rgba(255,170,0,0.1)'}}>DUPLICATE</span>}
-                        </div>
-                        <div className="card-meta">
-                          <span>ID: {c.tracking_id}</span>
-                          <span className={`status-badge status-${c.status}`}>{c.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            </>
-          )}
-
+            ))}
+            <div ref={terminalEndRef} />
+          </div>
         </div>
-
       </div>
     </div>
   );
