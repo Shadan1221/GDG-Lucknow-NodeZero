@@ -1,150 +1,194 @@
 # JanSeva AI — Jansunwai Grievance Resolution Agent
 
 > **GDG Lucknow Hackathon · Problem Statement PS-07 · Government Track**
+> 
+> *An AI-powered autonomous grievance management platform for UP Jansunwai that enables voice-first complaint filing, vernacular accessibility, autonomous department coordination, predictive governance analytics, and intelligent escalation workflows.*
 
 ---
 
-## The Problem
-
-UP's [Jansunwai portal](https://jansunwai.up.nic.in) receives **over 3 crore complaints** since inception — yet resolution is painfully slow and opaque. Citizens file a grievance and hear nothing for weeks. Departments receive complaints they aren't equipped to handle. Follow-ups are manual. Status updates, if they come at all, arrive in bureaucratic English that most UP residents can't parse.
-
-**The result**: crores of unresolved grievances, eroding public trust in government.
-
----
-
-## Our Solution
-
-**JanSeva AI** is a fully autonomous, multi-agent system that transforms the Jansunwai pipeline from end to end.
-
-```
-Citizen files grievance
-        │
-        ▼
-┌───────────────────┐
-│  Classification   │  ← LLM agent classifies complaint type, urgency, jurisdiction
-│      Agent        │    (road, water, electricity, encroachment, corruption…)
-└────────┬──────────┘
-         │
-         ▼
-┌───────────────────┐
-│   Routing Agent   │  ← Maps complaint to the exact department + officer
-│                   │    Cross-checks UP government org chart + LNN rules
-└────────┬──────────┘
-         │
-         ▼
-┌───────────────────┐
-│   Follow-up Agent │  ← Autonomous escalation: pings dept, logs silence,
-│                   │    re-routes if SLA breached, flags chronic non-responders
-└────────┬──────────┘
-         │
-         ▼
-┌───────────────────┐
-│  Citizen Notifier │  ← WhatsApp / SMS updates in Hindi & Awadhi
-│      Agent        │    "Aapki shikayat concerned vibhag ko bhej di gayi hai…"
-└───────────────────┘
-```
+## 1. The Problem
+UP's [Jansunwai portal](https://jansunwai.up.nic.in) receives **over 3 crore complaints** since inception—yet resolution is painfully slow, manual, and opaque:
+- **Manual Routing & Delay:** Complaints are manually routed across bureaucratic layers, leading to heavy delays.
+- **Duplicate Overload:** Citizens file the same grievance multiple times, overloading department officers.
+- **Accessibility Barriers:** Semi-literate or rural citizens find text-only forms hard to navigate.
+- **Lack of Follow-up:** SLA monitoring is manual, with no proactive alerts when deadlocks occur.
+- **Opaque Updates:** Status messages, if sent, are in complex bureaucratic English/Hindi that citizens can't understand.
 
 ---
 
-## Key Features
-
-| Feature | Detail |
-|---|---|
-| **Auto-Classification** | Fine-tuned classifier across 40+ complaint categories using historical Jansunwai data |
-| **Smart Routing** | Rule-based + LLM hybrid maps each complaint to the right dept/sub-dept at state/district/ward level |
-| **Autonomous Follow-up** | Cron-driven agent checks SLA timers; escalates to senior officers after 72h silence |
-| **Vernacular Updates** | Status messages generated in Hindi and Awadhi, delivered via WhatsApp Business API |
-| **Fraud & Duplicate Detection** | Embeddings-based deduplication prevents spam complaints and gaming the system |
-| **Dashboard** | Real-time resolution analytics for department heads and citizens |
+## 2. Core Objectives
+- **Voice-First Filing:** Enable citizens to file grievances naturally in Hindi or Awadhi via voice notes.
+- **Autonomous Classification & Routing:** Classify complaint urgency/category and route immediately to the correct officer.
+- **Semantic Deduplication:** Cluster duplicate complaints using semantic similarity models to prevent system gaming.
+- **Proactive SLA & Escalation:** Auto-track deadlines and autonomously escalate tickets up the hierarchy on breach.
+- **Vernacular Communication:** Provide updates in regional dialects (Hindi/Awadhi) via WhatsApp/SMS.
+- **Predictive Hotspot Mapping:** Empower municipal authorities with heatmaps and predictive analytics for seasonal issues.
 
 ---
 
-## Tech Stack
+## 3. System Architecture
 
 ```
-Backend         FastAPI · Python 3.12
-AI/Agents       Claude claude-sonnet-4-6 (Anthropic) · LangGraph for multi-agent orchestration
-Classification  Fine-tuned sentence-transformers on Jansunwai complaint corpus
-Database        Supabase (PostgreSQL + pgvector for semantic dedup)
-Messaging       WhatsApp Business Cloud API · Twilio SMS fallback
-Queue           Redis + Celery for async agent pipelines
-Deployment      Docker · Railway / Render
-```
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    JanSeva AI System                     │
-│                                                         │
-│  ┌──────────┐    ┌──────────────────────────────────┐  │
-│  │ WhatsApp │───▶│         Intake API               │  │
-│  │  / Web   │    │  (validates, deduplicates,        │  │
-│  └──────────┘    │   stores in Supabase)             │  │
-│                  └──────────────┬───────────────────┘  │
-│                                 │                        │
-│                  ┌──────────────▼───────────────────┐  │
-│                  │     LangGraph Agent Orchestrator   │  │
-│                  │                                    │  │
-│                  │  ClassifierAgent → RouterAgent     │  │
-│                  │        → FollowUpAgent             │  │
-│                  │        → NotifierAgent             │  │
-│                  └──────────────┬───────────────────┘  │
-│                                 │                        │
-│          ┌──────────────────────▼──────────────┐        │
-│          │         Supabase (State Store)       │        │
-│          │  complaints · routing_log · sla_log  │        │
-│          └─────────────────────────────────────┘        │
-└─────────────────────────────────────────────────────────┘
+                       ┌────────────────────────────────┐
+                       │      Citizen Intake Layer      │
+                       │    (WhatsApp Voice / Web UI)   │
+                       └───────────────┬────────────────┘
+                                       │
+                                       ▼
+                       ┌────────────────────────────────┐
+                       │          FastAPI App           │
+                       │      (Intake & Ingestion)      │
+                       └───────────────┬────────────────┘
+                                       │
+                                       ▼
+                       ┌────────────────────────────────┐
+                       │   LangGraph Agent Orchestrator  │
+                       │                                │
+                       │   ┌────────────────────────┐   │
+                       │   │   Intake & OCR Agent   │   │
+                       │   └───────────┬────────────┘   │
+                       │               │                │
+                       │   ┌───────────▼────────────┐   │
+                       │   │  Classification Agent  │   │
+                       │   └───────────┬────────────┘   │
+                       │               │                │
+                       │   ┌───────────▼────────────┐   │
+                       │   │     Routing Agent      │   │
+                       │   └───────────┬────────────┘   │
+                       │               │                │
+                       │   ┌───────────▼────────────┐   │
+                       │   │  Fraud/Duplicate Agent │   │
+                       │   └───────────┬────────────┘   │
+                       │               │                │
+                       │   ┌───────────▼────────────┐   │
+                       │   │  SLA Monitoring Agent  │   │
+                       │   └───────────┬────────────┘   │
+                       │               │                │
+                       │   ┌───────────▼────────────┐   │
+                       │   │  Notification Agent    │   │
+                       │   └────────────────────────┘   │
+                       └───────────────┬────────────────┘
+                                       │
+                                       ▼
+                       ┌────────────────────────────────┐
+                       │   Database & State Store       │
+                       │ (PostgreSQL + Qdrant Vector DB)│
+                       └────────────────────────────────┘
 ```
 
 ---
 
-## Why This Wins
+## 4. Multi-Agent System Design
 
-**Impact at scale** — UP has 25 crore citizens. Even a 20% improvement in grievance resolution velocity affects millions of lives directly.
+The core of JanSeva AI is a multi-agent system orchestrating the lifecycle of a grievance:
 
-**Technically deep** — Multi-agent orchestration with real state management, SLA timers, escalation trees, and vernacular NLG in a single coherent system. This is not a chatbot; it is an autonomous bureaucratic co-pilot.
-
-**Demo-able in 3 minutes** — File a grievance in Hindi on WhatsApp → watch agents classify, route, and confirm in real-time on screen. Judges see the entire pipeline live.
-
-**Local context nailed** — Built around Lucknow Nagar Nigam's actual department structure and the Jansunwai portal's known pain points.
-
-**Extensible** — The same agent framework can be dropped into any state's grievance system. The real TAM is all of India.
-
----
-
-## Team
-
-**Team NodeZero** · GDG Lucknow Hackathon 2025
+1. **Intake Agent:** Handles intake via voice (using transcription tools like Whisper), text, and images (OCR/Vision analysis to extract GPS coordinates and evaluate damage severity).
+2. **Classification Agent:** Classifies complaint category (Roads, Encroachment, Waste, Electricity, Corruption, etc.) and sets severity/priority scores.
+3. **Routing Agent:** Maps complaints directly to the ward-level, district-level, or department-level officer using the UP Government org chart.
+4. **SLA Monitoring Agent:** Tracks deadlines, sends auto-reminders to officers, and escalates to supervisors if resolution SLAs are breached.
+5. **Citizen Communication Agent:** Formulates personalized status updates in local dialects (Hindi/Awadhi) and pushes them via WhatsApp/SMS.
+6. **Analytics Agent:** Generates real-time geospatial heatmaps, seasonal trend analysis, and officer performance rankings.
+7. **Fraud Detection Agent:** Detects bot-generated, spam, or fake complaints using behavioral and validation rules.
 
 ---
 
-## Getting Started
+## 5. Key Features
 
-```bash
-git clone https://github.com/Shadan1221/GDG-Lucknow-NodeZero
-cd GDG-Lucknow-NodeZero
-cp .env.example .env        # add your API keys
-docker compose up --build
-```
-
-Open `http://localhost:8000/docs` for the API playground.
-
----
-
-## Roadmap
-
-- [ ] Complaint intake API + Supabase schema
-- [ ] ClassifierAgent with fine-tuned Hindi NLP model
-- [ ] RouterAgent with UP government department graph
-- [ ] FollowUpAgent with SLA engine
-- [ ] WhatsApp notifier in Hindi + Awadhi
-- [ ] Live demo dashboard
-- [ ] Integration mock with Jansunwai portal API
+- **Voice-First Filing:** Transcribe Awadhi/Hindi audio and extract structured data automatically.
+- **Image Evidence Processing:** Extract GPS metadata from uploaded photos and score structural damage using vision models.
+- **Duplicate Ticket Clustering:** Semantic similarity detection groups redundant complaints into "Master Tickets."
+- **Emergency Bypass:** Fast-tracks life-threatening or hazard complaints (e.g. fire, medical, collapsing structures) directly to critical responders.
+- **Digital Evidence Vault:** Secure and immutable storage for complaints, photos, and compliance history.
+- **Accountability Intelligence:** Detects suspicious closing patterns (e.g., officers closing tickets without physical inspection).
+- **Offline Filing Support:** Fallback SMS service for rural regions with low data connectivity.
 
 ---
 
-*Built at GDG Lucknow Hackathon — because every citizen deserves to know their complaint was heard.*
+## 6. Recommended Tech Stack
+
+- **Frontend:** Next.js (React) / Vite SPA, TailwindCSS, Framer Motion
+- **Backend:** FastAPI, Python 3.12, Celery & Redis
+- **AI/ML:** Gemini (for reasoning, classification, and vision processing), Whisper API (speech-to-text)
+- **Agent Orchestration:** LangGraph / CrewAI
+- **Database:** PostgreSQL (structured logs/complaints), Qdrant / ChromaDB (for vector semantic search/deduplication)
+- **Messaging:** WhatsApp Business Cloud API / Twilio SMS
+
+---
+
+## 7. Database Entities
+- **Users:** Credentials and roles (Citizen, Department Officer, Supervisor, State Authority).
+- **Complaints:** Intake details, status, transcript, category, priority, and assigned department/officer.
+- **Departments:** Organization hierarchy, department rules, and officer mapping.
+- **Escalation Logs:** SLA records, deadline timer history, and officer warnings.
+- **Satisfaction Reports:** Sentiment scores and feedback gathered after closure.
+- **Evidence Files:** Safe links to images/audio and extracted metadata.
+- **Officer Performance Records:** Metrics on response times and resolution speed benchmarks.
+
+---
+
+## 8. Development Roadmap
+
+- [ ] **Phase 1: Project Setup & DB Schema**
+  - Initialize FastAPI backend & Vite React frontend workspace.
+  - Setup PostgreSQL schemas (SQLAlchemy) and vector database connections.
+- [ ] **Phase 2: Intake & Classification Engine**
+  - Implement Whisper-based transcription pipeline.
+  - Integrate Gemini for complaint classification, extraction, and vision severity assessment.
+- [ ] **Phase 3: Routing & SLA Escalation Daemon**
+  - Build municipal org graph and routing agent.
+  - Setup Celery/scheduler jobs for SLA monitoring and ticket escalation.
+- [ ] **Phase 4: Deduplication & Fraud Detection**
+  - Implement semantic embeddings for duplicate clustering.
+  - Add fraud detection algorithms (geo-fencing and spam scoring).
+- [ ] **Phase 5: Dashboards & WhatsApp Simulator**
+  - Create Citizen WhatsApp Simulator UI.
+  - Develop Officer and Admin analytics dashboards with heatmaps.
+
+---
+
+## 9. Setup Instructions (Development)
+
+To get started with the project locally:
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- SQLite/PostgreSQL
+- Gemini API Key
+
+### Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Configure your environment:
+   ```bash
+   cp .env.example .env
+   # Populate GEMINI_API_KEY, Database URL, etc.
+   ```
+4. Run the server:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+### Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install packages:
+   ```bash
+   npm install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+*Built by Team NodeZero for GDG Lucknow Agentic Premier League Hackathon.*
